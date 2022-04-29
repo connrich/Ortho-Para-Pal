@@ -6,8 +6,6 @@ from PyQt5.QtWidgets import (QWidget, QApplication, QGridLayout, QLabel,
 from PyQt5.QtGui import QStandardItemModel, QStandardItem, QColor
 from PyQt5.QtCore import Qt
 from Resources.CustomWidgets import ErrorMessage, Page, SearchBar
-# from CustomWidgets import ErrorMessage, Page, SearchBar
-
 from Resources.RatioFinder import RatioFinder
 
 
@@ -15,8 +13,6 @@ from Resources.RatioFinder import RatioFinder
 class FileSearchPage(Page):
     def __init__(self):
         super().__init__()
-        # self.PageLayout = QGridLayout()
-        # self.setLayout(self.PageLayout)
 
         self.SearchBar = SearchBar('Enter file path: ')
         self.SearchBar.SubmitButton.clicked.connect(self.gatherRatios)
@@ -24,10 +20,10 @@ class FileSearchPage(Page):
 
         # Input field for saving the data to a CSV
         self.DatabaseInputLayout = QHBoxLayout()
-        self.DatabaseInputLayout.addWidget(QLabel("   Database Path:"))
+        self.DatabaseInputLayout.addWidget(QLabel("   Save Path:"))
         self.DBLocation = QLineEdit()
         self.DatabaseInputLayout.addWidget(self.DBLocation)
-        self.DBAppendBtn = QRadioButton('Append to db')
+        self.DBAppendBtn = QRadioButton('Save output')
         self.DatabaseInputLayout.addWidget(self.DBAppendBtn)
         self.PageLayout.addLayout(self.DatabaseInputLayout, 1, 0, Qt.AlignRight | Qt.AlignTop)
 
@@ -57,7 +53,6 @@ class FileSearchPage(Page):
                     if file_name.split('.')[-1] == 'csv':
                         results.append(self.getRatio(os.path.join(path, file_name)))
                         found_valid_file = True
-                
                 if not found_valid_file:
                     ErrorMessage('Could not find a valid CSV file.')
                     return
@@ -86,10 +81,13 @@ class FileSearchPage(Page):
         self.TreeModel.setColumnCount(2)
         rootNode = self.TreeModel.invisibleRootItem()
 
+        # Variable to track if logging should be active
+        enable_logging = self.DBAppendBtn.isChecked()
+
         for result in results:
             # Append to database if selected
-            if self.DBAppendBtn.isChecked():
-                self.addResultToDB(result) 
+            if enable_logging:
+                enable_logging = self.addResultToDB(result) 
 
             # Create branch with file name 
             file_branch = QStandardItem()
@@ -121,10 +119,15 @@ class FileSearchPage(Page):
             self.TreeViewer.resizeColumnToContents(0) 
 
     # Append to CSV database
+    # If the file name is invalid it returns False to stop data logging
+    # Else returns True to continue data logging
     def addResultToDB(self, result):
         # Check if result is an error
         if 'Error' in result:
-            return
+            return True
+
+        # Path provided in text input box
+        db_path = self.DBLocation.text()
 
         # Take file name from path 
         result['Filename'] = result['Filename'].split('\\')[-1]
@@ -142,8 +145,6 @@ class FileSearchPage(Page):
         # Create dataframe from result dictionary
         result_df = pd.DataFrame.from_dict([result])
 
-        # Path provided in text input box
-        db_path = self.DBLocation.text()
         # Validate the provided database path 
         if os.path.exists(db_path):
             if db_path.split('.')[-1] == 'csv':
@@ -154,15 +155,22 @@ class FileSearchPage(Page):
                     if result['Filename'] not in db_df['Filename'].values:
                         # Append result to database
                         df = pd.concat([db_df, result_df])
+                        print(df)
                         # Save new dataframe to database CSV
                         df.to_csv(db_path, index=False)
                 # Exception for exmpty CSV
                 except pd.errors.EmptyDataError:
+                    print('exception')
                     result_df.to_csv(db_path, index=False)
-                    print('excepted')
+            # If the file was not a CSV then we return false to stop subsequent logging attempts
+            else:
+                ErrorMessage('Database file is not in CSV format.')
+                return False
         # File does not currently exist
         else:
             result_df.to_csv(db_path, index=False)
+        return True 
+
     
     def splitUnits(self, value):
         for idx, i in enumerate(value):

@@ -35,7 +35,6 @@ class VisualizePage(Page):
         self.para_low = pg.InfiniteLine(pos=self.paraRange[0], angle=90, pen='r', movable=True)
         self.para_high = pg.InfiniteLine(pos=self.paraRange[1], angle=90, pen='r', movable=True)
         self.showOPRanges(True)
-
     
     def loadCSV(self, file_path):
         df = pd.read_csv(file_path, header=None)
@@ -60,10 +59,6 @@ class VisualizePage(Page):
             self.Graph.removeItem(self.ortho_high)
             self.Graph.removeItem(self.para_low)
             self.Graph.removeItem(self.para_high)
-
-
-            
-
 
 
 if __name__ == "__main__":

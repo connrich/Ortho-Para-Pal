@@ -21,7 +21,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle('Ortho-Para Pal')
         self.setWindowIcon(QIcon('Resources\\Quantum Q Favicon.jpg'))
-        self.setMinimumSize(550, 500)
+        self.setMinimumSize(800, 750)
 
         self.constructTabs()
     
