@@ -6,11 +6,13 @@ import pyqtgraph as pg
 
 
 class VisualizePage(Page):
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
 
-        self.orthoRange = [580, 595]
-        self.paraRange = [347, 365]
+        self.settings = settings
+
+        self.orthoRange = self.settings['orthoRange']
+        self.paraRange = self.settings['paraRange']
 
         self.SearchBar = SearchBar('Enter file path: ')
         self.SearchBar.SubmitButton.clicked.connect(lambda: self.loadCSV(self.SearchBar.InputField.text()))
@@ -30,10 +32,10 @@ class VisualizePage(Page):
         self.PageLayout.addWidget(self.Graph)
 
         # Vertical lines to show ortho and para ranges
-        self.ortho_low = pg.InfiniteLine(pos=self.orthoRange[0], angle=90, pen='y', movable=True)
-        self.ortho_high = pg.InfiniteLine(pos=self.orthoRange[1], angle=90, pen='y', movable=True)
-        self.para_low = pg.InfiniteLine(pos=self.paraRange[0], angle=90, pen='r', movable=True)
-        self.para_high = pg.InfiniteLine(pos=self.paraRange[1], angle=90, pen='r', movable=True)
+        self.ortho_low = pg.InfiniteLine(pos=self.orthoRange[0], angle=90, pen='y')
+        self.ortho_high = pg.InfiniteLine(pos=self.orthoRange[1], angle=90, pen='y')
+        self.para_low = pg.InfiniteLine(pos=self.paraRange[0], angle=90, pen='r')
+        self.para_high = pg.InfiniteLine(pos=self.paraRange[1], angle=90, pen='r')
         self.showOPRanges(True)
     
     def loadCSV(self, file_path):
@@ -47,6 +49,7 @@ class VisualizePage(Page):
         else:
             return None
 
+    # Show/hide the ranges for ortho and para
     def showOPRanges(self, show):
         if show:
             self.Graph.addItem(self.ortho_low)
@@ -59,6 +62,14 @@ class VisualizePage(Page):
             self.Graph.removeItem(self.ortho_high)
             self.Graph.removeItem(self.para_low)
             self.Graph.removeItem(self.para_high)
+
+    # Overloaded function for when settings are updated
+    def settingsUpdated(self):
+        print('update')
+        self.ortho_low.setPos(self.settings['orthoRange'][0])
+        self.ortho_high.setPos(self.settings['orthoRange'][1])
+        self.para_low.setPos(self.settings['paraRange'][0])
+        self.para_high.setPos(self.settings['paraRange'][1])
 
 
 if __name__ == "__main__":

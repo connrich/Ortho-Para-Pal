@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from pytz import timezone
 import pytz
+from matplotlib import pyplot as plt
 
 
 
@@ -25,9 +26,37 @@ class Para:
     # Stores integral sum
     integral = 0
 
+def correct_baseline(df, data_range):
+    # Filter for lower spectrum
+    cut_low = df[0] >= data_range[0]
+    df = df[cut_low]
+    # Filter for higher spectrum
+    cut_high = df[0] <= data_range[1]
+    df = df[cut_high]
+
+    # Coordinates for linear baseline estimation
+    first_point = df.iloc[0]
+    x1 = first_point[0]
+    y1 = first_point[1]
+    last_point = df.iloc[-1]
+    x2 = last_point[0]
+    y2 = last_point[1]
+
+    # Characteristics of the line
+    slope = (y2 - y1) / (x2 - x1)
+    intercept = y2 - (slope * x2)
+
+    # Iterate through the spectrum and subtract the baseline
+    for index, row in df.iterrows():
+        x = row[0]
+        y = row[1]
+        y_prime = y - (slope * x + intercept)
+        row[1] = y_prime
+
+    return df
 
 # Takes a CSV of wavelengths vs. intensity count
-def RatioFinder(file_path):
+def RatioFinder(file_path, base_correction=True, settings=None):
     # Check if files exists
     if not exists(file_path) or file_path is None or file_path == '':
         return 'Invalid path'
@@ -37,6 +66,10 @@ def RatioFinder(file_path):
     Ortho.integral = 0
     Para.peak = 0
     Para.integral = 0
+    if settings is not None:
+        Ortho.range = settings['orthoRange']
+        Para.range = settings['paraRange']
+        base_correction = settings['enableBaselineCorrection']
     
     # Create data frame of spectrum data
     df = pd.read_csv(file_path, header=None)
@@ -49,6 +82,11 @@ def RatioFinder(file_path):
         return {'Error': 'Encountered wrong datatype in CSV. Expects floats or integers. It also expects no column header names.',
                 'Filename': file_path.split('\\')[-1]}
     
+    # Correct baseline if specified
+    if base_correction:
+        data_range = [320, 620]
+        df = correct_baseline(df, data_range)
+
     # Iterate through rows
     for index, row in df.iterrows():
         wl = row[0]
@@ -90,7 +128,7 @@ def RatioFinder(file_path):
     output['Ortho peak'] = Ortho.peak
     output['Para peak percent'] = Para.peak / peak_sum * 100
     # output['Ortho peak percent'] = Ortho.peak / peak_sum * 100
-    output['P/O peak ratio'] = Para.peak / Ortho.peak 
+    output['O/P peak ratio'] = Ortho.peak / Para.peak
 
     # Data relating to integration
     integral_sum = Para.integral + Ortho.integral
@@ -98,7 +136,7 @@ def RatioFinder(file_path):
     output['Ortho integral'] = Ortho.integral
     output['Para integral percent'] = Para.integral / integral_sum * 100
     # output['Ortho integral percent'] = Ortho.integral / integral_sum * 100
-    output['P/O integral ratio'] = Para.integral / Ortho.integral
+    output['O/P integral ratio'] =  Ortho.integral / Para.integral
 
     return output
 

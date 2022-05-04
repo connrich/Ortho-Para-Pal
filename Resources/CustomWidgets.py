@@ -1,7 +1,9 @@
 import os
+import json
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtWidgets import (QApplication, QMessageBox, QWidget, QGridLayout, QHBoxLayout, 
-                                QLabel, QLineEdit, QPushButton, QFileDialog, QTreeView)
+from PyQt5.QtWidgets import (QApplication, QMessageBox, QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
+                                QLabel, QLineEdit, QPushButton, QFileDialog, QTreeView, QCheckBox)
+from PyQt5.QtGui import QFont, QIcon
 from pandas.api.types import is_numeric_dtype
 import pandas as pd
 import sys
@@ -49,8 +51,6 @@ class SearchBar(QWidget):
             # Create QFileDialog
             self.FileBrowser = FileDialog()
             self.FileBrowser.file_selected_signal.connect(self.populateInput)
-            self.FileBrowser.file_selected_signal.connect(self.SubmitButton.clicked.emit)
-
     
     def openFileBrowser(self):
         self.FileBrowser.show()
@@ -85,6 +85,7 @@ class FileDialog(QFileDialog):
     def filesSelected(self):
         return self.selectedFiles
 
+
 class Page(QWidget):
     def __init__(self):
         super().__init__()
@@ -104,13 +105,110 @@ class Page(QWidget):
             return False
         
         return True
+    
+    # Function to be called when settings are updated 
+    def settingsUpdated(self):
+        pass
         
 
+class SettingsWindow(QWidget):
+    def __init__(self, settings):
+        super().__init__()
+
+        # Global app settings
+        self.settings = settings
+
+        # Window settings
+        self.setWindowTitle('Settings')
+        self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'Resources\\SettingsGear.png')))
+        self.setMinimumWidth(300)
+
+        # Main layout for settings window
+        self.MainLayout = QGridLayout()
+        self.setLayout(self.MainLayout)
+
+        # Input field for ortho range
+        self.OrthoRange = RangeInputWidget('Ortho Range')
+        self.MainLayout.addWidget(self.OrthoRange)
+
+        # Input field for para range
+        self.ParaRange = RangeInputWidget('Para Range')
+        self.MainLayout.addWidget(self.ParaRange)
+
+        # Input field for the baseline range
+        self.BaselineRange = RangeInputWidget('Baseline range')
+        self.MainLayout.addWidget(self.BaselineRange)
+
+        # Enable/disable baseline correction
+        self.EnableBaselineCorrection = QCheckBox('Enable baseline subtraction')
+        self.MainLayout.addWidget(self.EnableBaselineCorrection)
+
+        # Button to apply the settings 
+        self.ApplyButton = QPushButton('Apply')
+        self.ApplyButton.clicked.connect(self.settingsApply)
+        self.MainLayout.addWidget(self.ApplyButton)
+
+    def showWindow(self):
+        # Populates fields with current settings
+        self.OrthoRange.populateRange(self.settings['orthoRange'])
+        self.ParaRange.populateRange(self.settings['paraRange'])
+        self.BaselineRange.populateRange(self.settings['baselineRange'])
+        self.EnableBaselineCorrection.setChecked(self.settings['enableBaselineCorrection'])
+
+        # Show the settings window 
+        self.show()
+    
+    def settingsApply(self):
+        # Update settings in settings dictionary
+        self.settings['orthoRange'] = self.OrthoRange.getRange()
+        self.settings['paraRange'] = self.ParaRange.getRange()
+        self.settings['baselineRange'] = self.BaselineRange.getRange()
+        self.settings['enableBaselineCorrection'] = self.EnableBaselineCorrection.isChecked()
+
+        # Write settings to the file
+        with open(os.path.join(os.path.dirname(__file__), 'settings.json'), 'w+') as json_file:
+            json.dump(self.settings, json_file)
+
+
+class RangeInputWidget(QWidget):
+    def __init__(self, title):
+        super().__init__()
+        # Create main widget layout
+        self.MainLayout = QVBoxLayout()
+        self.setLayout(self.MainLayout)
+
+        # Title for the widget
+        self.TitleLabel = QLabel(title)
+        font = self.TitleLabel.font()
+        font.setBold(True)
+        font.setPointSize(9)
+        self.TitleLabel.setFont(font)
+        self.TitleLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.MainLayout.addWidget(self.TitleLabel)
+
+        # Input boxes for low and high range 
+        self.InputLayout = QHBoxLayout()
+        self.MainLayout.addLayout(self.InputLayout)
+        self.LowInput = QLineEdit()
+        self.LowInput.setMaximumWidth(60)
+        self.InputLayout.addWidget(self.LowInput)
+        self.HighInput = QLineEdit()
+        self.HighInput.setMaximumWidth(60)
+        self.InputLayout.addWidget(self.HighInput)
+    
+    def getRange(self):
+        return [float(self.LowInput.text()), float(self.HighInput.text())]
+    
+    def populateRange(self, rnge):
+        self.LowInput.setText(str(rnge[0]))
+        self.HighInput.setText(str(rnge[1]))
+
+
 if __name__ == '__main__':
-    QtWidgets.QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
 
-    test_widget = SearchBar('Enter path:')
+    test_widget = SettingsWindow(settings=None)
     test_widget.show()
 
     sys.exit(app.exec())

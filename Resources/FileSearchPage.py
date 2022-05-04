@@ -11,23 +11,24 @@ from Resources.RatioFinder import RatioFinder
 
 
 class FileSearchPage(Page):
-    def __init__(self):
+    def __init__(self, settings):
         super().__init__()
+
+        self.settings = settings
 
         self.SearchBar = SearchBar('Enter file path: ')
         self.SearchBar.SubmitButton.clicked.connect(self.gatherRatios)
         self.PageLayout.addWidget(self.SearchBar)
 
         # Input field for saving the data to a CSV
-        self.DatabaseInputLayout = QHBoxLayout()
-        self.DatabaseInputLayout.addWidget(QLabel("   Save Path:"))
-        self.DBLocation = QLineEdit()
-        self.DatabaseInputLayout.addWidget(self.DBLocation)
+        self.SaveBar = SearchBar('Save path: ')
+        self.SaveBar.Layout.removeWidget(self.SaveBar.SubmitButton)
+        self.SaveBar.SubmitButton.deleteLater()
         self.DBAppendBtn = QRadioButton('Save output')
-        self.DatabaseInputLayout.addWidget(self.DBAppendBtn)
-        self.PageLayout.addLayout(self.DatabaseInputLayout, 1, 0, Qt.AlignRight | Qt.AlignTop)
+        self.SaveBar.Layout.addWidget(self.DBAppendBtn)
+        self.PageLayout.addWidget(self.SaveBar, 1, 0)
 
-        # Viewng window for the generated tree
+        # Viewing window for the generated tree
         self.TreeViewer = QTreeView()
         self.TreeViewer.setHeaderHidden(True)
         self.PageLayout.addWidget(self.TreeViewer)
@@ -72,7 +73,7 @@ class FileSearchPage(Page):
         # Check if path is valid
         if path != '' and os.path.exists(path) and path.split('.')[-1] == 'csv':
             # Get ratio results
-            return RatioFinder(path)          
+            return RatioFinder(path, settings=self.settings)          
 
     # Takes dictionary as argument and displays key/value pairs 
     def displayResults(self, results):
@@ -127,7 +128,7 @@ class FileSearchPage(Page):
             return True
 
         # Path provided in text input box
-        db_path = self.DBLocation.text()
+        db_path = self.SaveBar.InputField.text()
 
         # Take file name from path 
         result['Filename'] = result['Filename'].split('\\')[-1]
@@ -155,12 +156,10 @@ class FileSearchPage(Page):
                     if result['Filename'] not in db_df['Filename'].values:
                         # Append result to database
                         df = pd.concat([db_df, result_df])
-                        print(df)
                         # Save new dataframe to database CSV
                         df.to_csv(db_path, index=False)
                 # Exception for exmpty CSV
                 except pd.errors.EmptyDataError:
-                    print('exception')
                     result_df.to_csv(db_path, index=False)
             # If the file was not a CSV then we return false to stop subsequent logging attempts
             else:
@@ -170,7 +169,6 @@ class FileSearchPage(Page):
         else:
             result_df.to_csv(db_path, index=False)
         return True 
-
     
     def splitUnits(self, value):
         for idx, i in enumerate(value):
