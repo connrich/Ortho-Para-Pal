@@ -8,6 +8,7 @@ from PyQt5.QtWidgets import (QApplication, QMessageBox, QWidget, QGridLayout, QH
 from PyQt5.QtGui import QFont, QIcon
 from pandas.api.types import is_numeric_dtype
 import pandas as pd
+import pyqtgraph as pg
 import sys
 import random
 import typing
@@ -208,29 +209,33 @@ class RangeInputWidget(QWidget):
         self.HighInput.setText(str(rnge[1]))
 
 
-class GraphSettingsWidget(QWidget):
+class GraphDisplayWidget(QWidget):
     def __init__(self, GraphDisplay=None, title='Graph Properties'):
         super().__init__()
 
+        # Layout of the widget
         self.Layout = QVBoxLayout()
         self.Layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
         self.setLayout(self.Layout)
 
+        # Displayed widget title
         self.title = title
         self.TitleLabel = QLabel(self.title)
         self.TitleLabel.setFixedHeight(40)
         self.TitleLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.Layout.addWidget(self.TitleLabel)
 
+        # Layout for various data items
         self.DataItems = QVBoxLayout()
         self.Layout.addLayout(self.DataItems)
-        self.addDataset(None, None, 'file')
 
         self.GraphDisplay = GraphDisplay
 
     def addDataset(self, parent_graph, df, name, color=None):
         item = DataItem(self, parent_graph, df, name, color)
         self.DataItems.addLayout(item)
+        print('added')
+        return item
     
     def removeDataset(self, DataItem):
         self.DataItems.removeItem(DataItem)
@@ -245,6 +250,10 @@ class DataItem(QHBoxLayout):
 
         # Graphwidget where this data is displayed
         self.parent_graph = parent_graph
+
+        # Plot item used to display data on graph
+        self.PlotDataItem = pg.PlotDataItem(data[0], data[1], pen=pg.mkPen())
+
 
         # Set the name of the data
         self.name = name
@@ -276,10 +285,12 @@ class DataItem(QHBoxLayout):
     
     def setColor(self, color: tuple) -> None:
         r, g, b = color
-        self.ColorButton.setStyleSheet(f"QPushButton {{ background-color: rgb({r}, {g}, {b});}};")  
+        self.ColorButton.setStyleSheet(f"QPushButton {{ background-color: rgb({r}, {g}, {b});}};") 
+        self.PlotDataItem.setPen(pg.mkPen(color))
 
     def delete(self) -> None:
         self.parent.removeDataset(self)
+        self.parent_graph.removeItem(self.PlotDataItem)
         for i in reversed(range(self.count())):
             self.itemAt(i).widget().deleteLater()
         self.deleteLater()

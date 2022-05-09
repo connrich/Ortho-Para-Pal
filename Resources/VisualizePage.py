@@ -1,7 +1,7 @@
 import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QGridLayout, QLabel
 from PyQt5.QtGui import QFont
-from Resources.CustomWidgets import ErrorMessage, Page, SearchBar, GraphSettingsWidget
+from Resources.CustomWidgets import ErrorMessage, Page, SearchBar, GraphDisplayWidget
 import pandas as pd
 import pyqtgraph as pg
 
@@ -41,8 +41,8 @@ class VisualizePage(Page):
         self.showOPRanges(True)
     
         # Create graph data widget
-        self.GraphData = GraphSettingsWidget(GraphDisplay=self.Graph)
-        self.PageLayout.addWidget(self.GraphData, 2, 1)
+        self.GraphDisplay = GraphDisplayWidget(GraphDisplay=self.Graph)
+        self.PageLayout.addWidget(self.GraphDisplay, 2, 1)
 
         self.PageLayout.setRowStretch(0 ,0)
         self.PageLayout.setRowStretch(1 ,0)
@@ -53,9 +53,10 @@ class VisualizePage(Page):
 
         # Uses class method to determine if the data frame is valid
         if self.isDFValid(df, error_msg=True):
-            self.Graph.clear()
-            self.showOPRanges(True)
-            self.Graph.plot(df[0], df[1])
+            name = file_path.split('\\')[-1]
+            plot_item = self.GraphDisplay.addDataset(self.Graph, df, file_path.split('\\')[-1])
+            self.Graph.addItem(plot_item.PlotDataItem)
+            print('df loaded')
             return df
         else:
             return None
