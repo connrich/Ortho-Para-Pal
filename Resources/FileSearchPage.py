@@ -134,7 +134,7 @@ class FileSearchPage(Page):
         result['Filename'] = result['Filename'].split('\\')[-1]
 
         # Append additional result fields
-        name = result['Filename'].split('_')[1:5]
+        name = result['Filename'].split('_')[1:6]
         result['Time (pst)'] = name.pop(0)
         result['Gas'] = name.pop(0)
         pressure = self.splitUnits(name.pop(0))
