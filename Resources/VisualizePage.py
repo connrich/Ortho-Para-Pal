@@ -56,7 +56,6 @@ class VisualizePage(Page):
             name = file_path.split('\\')[-1]
             plot_item = self.GraphDisplay.addDataset(self.Graph, df, file_path.split('\\')[-1])
             self.Graph.addItem(plot_item.PlotDataItem)
-            print('df loaded')
             return df
         else:
             return None
