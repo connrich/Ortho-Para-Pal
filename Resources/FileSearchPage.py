@@ -163,13 +163,15 @@ class FileSearchPage(Page):
                     result_df.to_csv(db_path, index=False)
             # If the file was not a CSV then we return false to stop subsequent logging attempts
             else:
-                ErrorMessage('Database file is not in CSV format.')
+                ErrorMessage('Database file is not in CSV format. You need to add ".csv" to the end.')
                 return False
         # File does not currently exist
         else:
             result_df.to_csv(db_path, index=False)
         return True 
     
+    # Splits the units from a number
+    # i.e. 160PSI -> [160, 'PSI']
     def splitUnits(self, value):
         for idx, i in enumerate(value):
             if i.isalpha():

@@ -16,6 +16,7 @@ from Resources.CustomWidgets import SettingsWindow
 # Database viewer
 # Automation of SPC conversion
 #   - Autoclicker for EFTIR
+# Freeze X and Y axis for zooming functionality
 
 
 class MainWindow(QMainWindow):

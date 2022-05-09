@@ -65,7 +65,6 @@ class VisualizePage(Page):
 
     # Overloaded function for when settings are updated
     def settingsUpdated(self):
-        print('update')
         self.ortho_low.setPos(self.settings['orthoRange'][0])
         self.ortho_high.setPos(self.settings['orthoRange'][1])
         self.para_low.setPos(self.settings['paraRange'][0])
