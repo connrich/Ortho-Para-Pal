@@ -240,7 +240,6 @@ class GraphDisplayWidget(QWidget):
     def addDataset(self, parent_graph, df, name, color=None):
         item = DataItem(self, parent_graph, df, name, color)
         self.DataItems.addLayout(item)
-        print('added')
         return item
     
     def removeDataset(self, DataItem):
