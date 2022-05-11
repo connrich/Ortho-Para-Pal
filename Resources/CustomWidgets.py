@@ -1,12 +1,17 @@
 import os
 import json
+import typing
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (QApplication, QMessageBox, QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
-                                QLabel, QLineEdit, QPushButton, QFileDialog, QTreeView, QCheckBox)
+                                QLabel, QLineEdit, QPushButton, QFileDialog, QTreeView, QColorDialog,
+                                QCheckBox, QListWidget, QListWidgetItem)
 from PyQt5.QtGui import QFont, QIcon
 from pandas.api.types import is_numeric_dtype
 import pandas as pd
+import pyqtgraph as pg
 import sys
+import random
+import typing
 
 
 
@@ -51,6 +56,7 @@ class SearchBar(QWidget):
             # Create QFileDialog
             self.FileBrowser = FileDialog()
             self.FileBrowser.file_selected_signal.connect(self.populateInput)
+            self.FileBrowser.file_selected_signal.connect(self.SubmitButton.click)
     
     def openFileBrowser(self):
         self.FileBrowser.show()
@@ -204,11 +210,108 @@ class RangeInputWidget(QWidget):
         self.HighInput.setText(str(rnge[1]))
 
 
+class GraphDisplayWidget(QWidget):
+    def __init__(self, GraphDisplay=None, title='Graph Properties'):
+        super().__init__()
+
+        # Widget size settings
+        self.setMaximumWidth(400)
+
+        # Layout of the widget
+        self.Layout = QVBoxLayout()
+        self.Layout.setAlignment(QtCore.Qt.AlignHCenter | QtCore.Qt.AlignTop)
+        self.Layout.setSpacing(1)
+        self.setLayout(self.Layout)
+
+        # Displayed widget title
+        self.title = title
+        self.TitleLabel = QLabel(self.title)
+        self.TitleLabel.setFixedHeight(40)
+        self.TitleLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.Layout.addWidget(self.TitleLabel)
+
+        # Layout for various data items
+        self.DataItems = QVBoxLayout()
+        self.Layout.addLayout(self.DataItems)
+
+        # Graph for display the data
+        self.GraphDisplay = GraphDisplay
+
+    def addDataset(self, parent_graph, df, name, color=None):
+        item = DataItem(self, parent_graph, df, name, color)
+        self.DataItems.addLayout(item)
+        return item
+    
+    def removeDataset(self, DataItem):
+        self.DataItems.removeItem(DataItem)
+    
+    
+class DataItem(QHBoxLayout):
+    def __init__(self, parent, parent_graph, data, name, color=None):
+        super().__init__()
+
+        # Parent GraphSettingWidget
+        self.parent = parent
+
+        # Graphwidget where this data is displayed
+        self.parent_graph = parent_graph
+
+        # Plot item used to display data on graph
+        self.PlotDataItem = pg.PlotDataItem(data[0], data[1], pen=pg.mkPen())
+
+        # Set the name of the data
+        self.name = name
+        self.NameLabel = QLabel(name)
+        self.addWidget(self.NameLabel) 
+        
+        # Set the color for display
+        self.ColorButton = QPushButton()
+        self.ColorButton.setFixedWidth(28)
+        self.ColorButton.clicked.connect(self.changeColor)
+        self.addWidget(self.ColorButton)
+        if color is None:
+            self.setColor((random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)))
+        else:
+            self.setColor(color)
+        
+        # Button for deleting the data
+        self.DeleteButton = QPushButton()
+        self.DeleteButton.setText('X')
+        self.DeleteButton.setFixedWidth(28)
+        self.DeleteButton.clicked.connect(self.delete)
+        self.DeleteButton.clicked.connect(self.DeleteButton.deleteLater)
+        self.addWidget(self.DeleteButton)
+
+        self.setContentsMargins(0, 0, 0, 0)
+    
+    def setName(self, name: str) -> None:
+        self.name = name
+        self.NameLabel.setText(self.name)
+    
+    def setColor(self, color: tuple) -> None:
+        r, g, b = color
+        self.ColorButton.setStyleSheet(f"QPushButton {{ background-color: rgb({r}, {g}, {b});}};") 
+        self.PlotDataItem.setPen(pg.mkPen(color))
+    
+    def changeColor(self):
+        color = QColorDialog.getColor()
+        if color is not None:
+            self.setColor((color.red(), color.green(), color.blue()))
+
+    def delete(self) -> None:
+        self.parent.removeDataset(self)
+        self.parent_graph.removeItem(self.PlotDataItem)
+        for i in reversed(range(self.count())):
+            self.itemAt(i).widget().deleteLater()
+        self.deleteLater()
+
+            
+
 if __name__ == '__main__':
     QApplication.setAttribute(QtCore.Qt.AA_EnableHighDpiScaling, True)
     app = QApplication(sys.argv)
 
-    test_widget = SettingsWindow(settings=None)
+    test_widget = GraphDisplayWidget()
     test_widget.show()
 
     sys.exit(app.exec())
