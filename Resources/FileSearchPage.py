@@ -24,7 +24,10 @@ class FileSearchPage(Page):
         self.SaveBar = SearchBar('Save path: ')
         self.SaveBar.Layout.removeWidget(self.SaveBar.SubmitButton)
         self.SaveBar.SubmitButton.deleteLater()
-        self.DBAppendBtn = QRadioButton('Save output')
+        self.SaveButton = QPushButton('Save')
+        self.SaveButton.clicked.connect(self.saveResults)
+        self.SaveBar.Layout.addWidget(self.SaveButton)
+        self.DBAppendBtn = QRadioButton('Auto-save')
         self.SaveBar.Layout.addWidget(self.DBAppendBtn)
         self.PageLayout.addWidget(self.SaveBar, 1, 0)
 
@@ -118,6 +121,16 @@ class FileSearchPage(Page):
 
             self.TreeViewer.setModel(self.TreeModel)
             self.TreeViewer.resizeColumnToContents(0) 
+    
+    # Function for saving the currenlty loaded results
+    def saveResults(self):
+        if self.results is None:
+            return
+
+        for result in self.results:
+            valid_file = self.addResultToDB(result)
+            if not valid_file:
+                break
 
     # Append to CSV database
     # If the file name is invalid it returns False to stop data logging
@@ -164,7 +177,7 @@ class FileSearchPage(Page):
                     result_df.to_csv(db_path, index=False)
             # If the file was not a CSV then we return false to stop subsequent logging attempts
             else:
-                ErrorMessage('Database file is not in CSV format. You need to add ".csv" to the end.')
+                ErrorMessage('Database file is not in CSV format. You may need to add ".csv" to the end.')
                 return False
         # File does not currently exist
         else:
