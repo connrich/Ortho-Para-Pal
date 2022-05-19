@@ -70,6 +70,9 @@ def RatioFinder(file_path, base_correction=True, settings=None):
         Ortho.range = settings['orthoRange']
         Para.range = settings['paraRange']
         base_correction = settings['enableBaselineCorrection']
+        baseline_range = settings['baselineRange']
+    else:
+        baseline_range = [320, 620]
     
     # Create data frame of spectrum data
     df = pd.read_csv(file_path, header=None)
@@ -84,8 +87,7 @@ def RatioFinder(file_path, base_correction=True, settings=None):
     
     # Correct baseline if specified
     if base_correction:
-        data_range = [320, 620]
-        df = correct_baseline(df, data_range)
+        df = correct_baseline(df, baseline_range)
 
     # Iterate through rows
     for index, row in df.iterrows():

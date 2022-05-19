@@ -20,6 +20,9 @@ class FileSearchPage(Page):
         self.SearchBar.SubmitButton.clicked.connect(self.gatherRatios)
         self.PageLayout.addWidget(self.SearchBar)
 
+        # Variable for storing most recent results
+        self.results = None
+
         # Input field for saving the data to a CSV
         self.SaveBar = SearchBar('Save path: ')
         self.SaveBar.Layout.removeWidget(self.SaveBar.SubmitButton)
@@ -69,6 +72,7 @@ class FileSearchPage(Page):
                     ErrorMessage('Error: Wrong file type. Only accepts CSV format or a folder containing CSV.')
                     return
             
+            self.results = results 
             self.displayResults(results)
 
     # Called when file path is submitted 
@@ -96,7 +100,7 @@ class FileSearchPage(Page):
             # Create branch with file name 
             file_branch = QStandardItem()
             file_branch.setEditable(False)
-            file_branch.setText(result.pop('Filename'))
+            file_branch.setText(result['Filename'])
             if 'Error' in result:
                 file_branch.setForeground(QColor(255,0,0))
             rootNode.appendRow(file_branch)
@@ -128,6 +132,7 @@ class FileSearchPage(Page):
             return
 
         for result in self.results:
+            print(result)
             valid_file = self.addResultToDB(result)
             if not valid_file:
                 break

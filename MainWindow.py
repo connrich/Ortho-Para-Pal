@@ -10,12 +10,6 @@ from Resources.CustomWidgets import SettingsWindow
 
 
 # TODO
-# Load multiple spectra for graphing
-#   - Need selection for which to display
-#   - Custom widget for selection menu
-# Database viewer
-# Automation of SPC conversion
-#   - Autoclicker for EFTIR
 # Freeze X and Y axis for zooming functionality
 
 
