@@ -4,7 +4,7 @@ import typing
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtWidgets import (QApplication, QMessageBox, QWidget, QGridLayout, QHBoxLayout, QVBoxLayout,
                                 QLabel, QLineEdit, QPushButton, QFileDialog, QTreeView, QColorDialog,
-                                QCheckBox, QListWidget, QListWidgetItem)
+                                QCheckBox, QListWidget, QListWidgetItem, QButtonGroup, QRadioButton)
 from PyQt5.QtGui import QFont, QIcon
 from pandas.api.types import is_numeric_dtype
 import pandas as pd
@@ -124,6 +124,11 @@ class SettingsWindow(QWidget):
         # Global app settings
         self.settings = settings
 
+        # Fonts for settings
+        self.TitleFont = QFont()
+        self.TitleFont.setBold(True)
+        self.TitleFont.setPointSize(9)
+
         # Window settings
         self.setWindowTitle('Settings')
         self.setWindowIcon(QIcon(os.path.join(os.path.dirname(__file__), 'Resources\\SettingsGear.png')))
@@ -133,6 +138,12 @@ class SettingsWindow(QWidget):
         self.MainLayout = QGridLayout()
         self.setLayout(self.MainLayout)
 
+        # Title for intergration ranges
+        self.RangeTitle = QLabel('Integration Ranges')
+        self.RangeTitle.setAlignment(QtCore.Qt.AlignCenter)
+        self.RangeTitle.setFont(self.TitleFont)
+        self.MainLayout.addWidget(self.RangeTitle)
+
         # Input field for ortho range
         self.OrthoRange = RangeInputWidget('Ortho Range')
         self.MainLayout.addWidget(self.OrthoRange)
@@ -141,13 +152,57 @@ class SettingsWindow(QWidget):
         self.ParaRange = RangeInputWidget('Para Range')
         self.MainLayout.addWidget(self.ParaRange)
 
-        # Input field for the baseline range
-        self.BaselineRange = RangeInputWidget('Baseline range')
-        self.MainLayout.addWidget(self.BaselineRange)
+        # Title label for corrections
+        self.CorrectionLabel = QLabel('Baseline Correction')
+        self.CorrectionLabel.setAlignment(QtCore.Qt.AlignCenter)
+        self.CorrectionLabel.setFont(self.TitleFont)
+        self.MainLayout.addWidget(self.CorrectionLabel)
+
+        # Group for making baseline correction options mutually exclusive
+        self.BaselineCorrectionOptions = QButtonGroup()
+        self.BaselineCorrectionOptions.setExclusive(True)
 
         # Enable/disable baseline correction
-        self.EnableBaselineCorrection = QCheckBox('Enable baseline subtraction')
-        self.MainLayout.addWidget(self.EnableBaselineCorrection)
+        self.DisableBaselineCorrection = QCheckBox('Disable baseline correction')
+        self.BaselineCorrectionOptions.addButton(self.DisableBaselineCorrection)
+        self.MainLayout.addWidget(self.DisableBaselineCorrection)
+
+        # Enable/disable linear approximation baseline correction
+        self.EnableLinearCorrection = QCheckBox('Enable linear baseline correction')
+        self.BaselineCorrectionOptions.addButton(self.EnableLinearCorrection)
+        self.MainLayout.addWidget(self.EnableLinearCorrection)
+
+        # Input field for the baseline range
+        self.BaselineRange = RangeInputWidget('Linear baseline correction range')
+        self.MainLayout.addWidget(self.BaselineRange)
+
+        # Enable/disable background subtraction
+        self.EnableBackgroundSubtraction = QCheckBox('Enable background subtraction')
+        self.BaselineCorrectionOptions.addButton(self.EnableBackgroundSubtraction)
+        self.MainLayout.addWidget(self.EnableBackgroundSubtraction)
+
+        # Mutually exclusive options for background subtraction 
+        self.BackgroundSubtractionOptions = QHBoxLayout()
+        self.AverageSelection = QButtonGroup()
+        self.AverageSelection.setExclusive(True)
+        self.avg20 = QRadioButton('20 avg.')
+        self.AverageSelection.addButton(self.avg20)
+        self.BackgroundSubtractionOptions.addWidget(self.avg20)
+        self.avg30 = QRadioButton('30 avg.')
+        self.AverageSelection.addButton(self.avg30)
+        self.BackgroundSubtractionOptions.addWidget(self.avg30)
+        self.avg50 = QRadioButton('50 avg.')
+        self.AverageSelection.addButton(self.avg50)
+        self.BackgroundSubtractionOptions.addWidget(self.avg50)
+        self.CustomBackground = QRadioButton('Custom')
+        self.AverageSelection.addButton(self.CustomBackground)
+        self.BackgroundSubtractionOptions.addWidget(self.CustomBackground)
+        self.MainLayout.addLayout(self.BackgroundSubtractionOptions, 8, 0)
+
+        # Line edit for pasting path to custom background spectrum
+        self.CustomBackgroundPath = QLineEdit()
+        self.CustomBackgroundPath.setDisabled(True)
+        self.MainLayout.addWidget(self.CustomBackgroundPath)
 
         # Button to apply the settings 
         self.ApplyButton = QPushButton('Apply')
@@ -159,7 +214,7 @@ class SettingsWindow(QWidget):
         self.OrthoRange.populateRange(self.settings['orthoRange'])
         self.ParaRange.populateRange(self.settings['paraRange'])
         self.BaselineRange.populateRange(self.settings['baselineRange'])
-        self.EnableBaselineCorrection.setChecked(self.settings['enableBaselineCorrection'])
+        self.EnableLinearCorrection.setChecked(self.settings['enableBaselineCorrection'])
 
         # Show the settings window 
         self.show()
@@ -169,7 +224,7 @@ class SettingsWindow(QWidget):
         self.settings['orthoRange'] = self.OrthoRange.getRange()
         self.settings['paraRange'] = self.ParaRange.getRange()
         self.settings['baselineRange'] = self.BaselineRange.getRange()
-        self.settings['enableBaselineCorrection'] = self.EnableBaselineCorrection.isChecked()
+        self.settings['enableBaselineCorrection'] = self.EnableLinearCorrection.isChecked()
 
         # Write settings to the file
         with open(os.path.join(os.path.dirname(__file__), 'settings.json'), 'w+') as json_file:
@@ -185,10 +240,6 @@ class RangeInputWidget(QWidget):
 
         # Title for the widget
         self.TitleLabel = QLabel(title)
-        font = self.TitleLabel.font()
-        font.setBold(True)
-        font.setPointSize(9)
-        self.TitleLabel.setFont(font)
         self.TitleLabel.setAlignment(QtCore.Qt.AlignCenter)
         self.MainLayout.addWidget(self.TitleLabel)
 
