@@ -1,5 +1,5 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QGridLayout, QLabel
+from PyQt5.QtWidgets import QApplication, QWidget, QCheckBox, QGridLayout, QLabel, QHBoxLayout
 from PyQt5.QtGui import QFont
 from Resources.CustomWidgets import ErrorMessage, Page, SearchBar, GraphDisplayWidget
 import pandas as pd
@@ -12,32 +12,27 @@ class VisualizePage(Page):
 
         # Global app settings
         self.settings = settings
-        self.orthoRange = self.settings['orthoRange']
-        self.paraRange = self.settings['paraRange']
 
         # Input field for loading file
         self.SearchBar = SearchBar('Enter file path: ')
         self.SearchBar.SubmitButton.clicked.connect(lambda: self.loadCSV(self.SearchBar.InputField.text()))
         self.PageLayout.addWidget(self.SearchBar)
 
-        # Button to toggle the ranges 
-        self.ShowRangeBtn = QCheckBox("Show ranges")
-        self.ShowRangeBtn.setChecked(True)
-        self.ShowRangeBtn.clicked.connect(lambda: self.showOPRanges(self.ShowRangeBtn.isChecked()))
-        self.PageLayout.addWidget(self.ShowRangeBtn)
-
         # Create graph widget
         self.Graph = pg.PlotWidget(title="Spectrum")
-        self.Graph.plotItem.setMouseEnabled(y=False)
+        # self.Graph.plotItem.setMouseEnabled(y=False)
         self.Graph.setLabel('bottom', 'Wavelength (1/cm)')
         self.Graph.setLabel('left', 'Intensity Count')
-        self.PageLayout.addWidget(self.Graph)
+        self.PageLayout.addWidget(self.Graph, 2, 0)
+
+        # Initialize toolbar
+        self.initToolbar()
 
         # Vertical lines to show ortho and para ranges
-        self.ortho_low = pg.InfiniteLine(pos=self.orthoRange[0], angle=90, pen='y')
-        self.ortho_high = pg.InfiniteLine(pos=self.orthoRange[1], angle=90, pen='y')
-        self.para_low = pg.InfiniteLine(pos=self.paraRange[0], angle=90, pen='r')
-        self.para_high = pg.InfiniteLine(pos=self.paraRange[1], angle=90, pen='r')
+        self.ortho_low = pg.InfiniteLine(pos=self.settings['orthoRange'][0], angle=90, pen='y')
+        self.ortho_high = pg.InfiniteLine(pos=self.settings['orthoRange'][1], angle=90, pen='y')
+        self.para_low = pg.InfiniteLine(pos=self.settings['paraRange'][0], angle=90, pen='r')
+        self.para_high = pg.InfiniteLine(pos=self.settings['paraRange'][1], angle=90, pen='r')
         self.showOPRanges(True)
     
         # Create graph data widget
@@ -47,6 +42,29 @@ class VisualizePage(Page):
         self.PageLayout.setRowStretch(0 ,0)
         self.PageLayout.setRowStretch(1 ,0)
     
+    # Initialize tool bar buttons
+    def initToolbar(self):
+        # Create toolbar layout
+        self.ToolbarLayout = QHBoxLayout()
+        self.PageLayout.addLayout(self.ToolbarLayout, 1, 0)
+
+        # Checkbox to toggle the display of integration ranges 
+        self.ShowRangeBtn = QCheckBox("Show integration ranges")
+        self.ShowRangeBtn.setChecked(True)
+        self.ShowRangeBtn.clicked.connect(lambda: self.showOPRanges(self.ShowRangeBtn.isChecked()))
+        self.ToolbarLayout.addWidget(self.ShowRangeBtn)
+
+        # Checkbox to toggle x-axis zooming
+        self.LockX = QCheckBox("Lock X axis")
+        self.LockX.clicked.connect(lambda: self.Graph.plotItem.setMouseEnabled(x=not self.LockX.isChecked()))
+        self.LockX.clicked.connect(lambda: print(self.LockX.isChecked()))
+        self.ToolbarLayout.addWidget(self.LockX)
+
+        # Checkbox to toggle y-axis zooming
+        self.LockY = QCheckBox("Lock Y axis")
+        self.LockY.clicked.connect(lambda: self.Graph.plotItem.setMouseEnabled(y=not self.LockY.isChecked()))
+        self.ToolbarLayout.addWidget(self.LockY)
+
     # Load a CSV from a path
     def loadCSV(self, file_path):
         df = pd.read_csv(file_path, header=None)

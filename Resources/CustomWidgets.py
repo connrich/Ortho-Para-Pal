@@ -215,7 +215,7 @@ class GraphDisplayWidget(QWidget):
         super().__init__()
 
         # Widget size settings
-        self.setMaximumWidth(400)
+        self.setMaximumWidth(300)
 
         # Layout of the widget
         self.Layout = QVBoxLayout()
