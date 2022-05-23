@@ -132,7 +132,6 @@ class FileSearchPage(Page):
             return
 
         for result in self.results:
-            print(result)
             valid_file = self.addResultToDB(result)
             if not valid_file:
                 break

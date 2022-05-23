@@ -159,48 +159,61 @@ class SettingsWindow(QWidget):
         self.MainLayout.addWidget(self.CorrectionLabel)
 
         # Group for making baseline correction options mutually exclusive
+        # Button id 0 = Disabled
+        # Button id 1 = Linear approximation
+        # Button id 2 = Background subtraction
         self.BaselineCorrectionOptions = QButtonGroup()
         self.BaselineCorrectionOptions.setExclusive(True)
 
         # Enable/disable baseline correction
         self.DisableBaselineCorrection = QCheckBox('Disable baseline correction')
         self.BaselineCorrectionOptions.addButton(self.DisableBaselineCorrection)
+        self.BaselineCorrectionOptions.setId(self.DisableBaselineCorrection, 0)
         self.MainLayout.addWidget(self.DisableBaselineCorrection)
 
         # Enable/disable linear approximation baseline correction
         self.EnableLinearCorrection = QCheckBox('Enable linear baseline correction')
         self.BaselineCorrectionOptions.addButton(self.EnableLinearCorrection)
+        self.BaselineCorrectionOptions.setId(self.EnableLinearCorrection, 1)
         self.MainLayout.addWidget(self.EnableLinearCorrection)
 
         # Input field for the baseline range
-        self.BaselineRange = RangeInputWidget('Linear baseline correction range')
-        self.MainLayout.addWidget(self.BaselineRange)
+        self.LinearBaselineRange = RangeInputWidget('Linear baseline correction range')
+        self.MainLayout.addWidget(self.LinearBaselineRange)
 
         # Enable/disable background subtraction
         self.EnableBackgroundSubtraction = QCheckBox('Enable background subtraction')
         self.BaselineCorrectionOptions.addButton(self.EnableBackgroundSubtraction)
+        self.BaselineCorrectionOptions.setId(self.EnableBackgroundSubtraction, 2)
         self.MainLayout.addWidget(self.EnableBackgroundSubtraction)
 
         # Mutually exclusive options for background subtraction 
+        # Button id is equal to the number of averages
+        # Custom background has button id = 0
         self.BackgroundSubtractionOptions = QHBoxLayout()
         self.AverageSelection = QButtonGroup()
         self.AverageSelection.setExclusive(True)
         self.avg20 = QRadioButton('20 avg.')
         self.AverageSelection.addButton(self.avg20)
+        self.AverageSelection.setId(self.avg20, 20)
         self.BackgroundSubtractionOptions.addWidget(self.avg20)
         self.avg30 = QRadioButton('30 avg.')
         self.AverageSelection.addButton(self.avg30)
+        self.AverageSelection.setId(self.avg30, 30)
         self.BackgroundSubtractionOptions.addWidget(self.avg30)
         self.avg50 = QRadioButton('50 avg.')
         self.AverageSelection.addButton(self.avg50)
+        self.AverageSelection.setId(self.avg50, 50)
         self.BackgroundSubtractionOptions.addWidget(self.avg50)
         self.CustomBackground = QRadioButton('Custom')
         self.AverageSelection.addButton(self.CustomBackground)
+        self.AverageSelection.setId(self.CustomBackground, 0)
         self.BackgroundSubtractionOptions.addWidget(self.CustomBackground)
         self.MainLayout.addLayout(self.BackgroundSubtractionOptions, 8, 0)
+        self.AverageSelection.idToggled.connect(self.backgroundSelectionChanged)
 
         # Line edit for pasting path to custom background spectrum
-        self.CustomBackgroundPath = QLineEdit()
+        self.CustomBackgroundPath = QLineEdit('Enter path for custom background spectrum')
         self.CustomBackgroundPath.setDisabled(True)
         self.MainLayout.addWidget(self.CustomBackgroundPath)
 
@@ -209,28 +222,46 @@ class SettingsWindow(QWidget):
         self.ApplyButton.clicked.connect(self.settingsApply)
         self.MainLayout.addWidget(self.ApplyButton)
 
+    # Populates fields with current settings
     def showWindow(self):
-        # Populates fields with current settings
+        # Integration ranges for ortho and para bands
         self.OrthoRange.populateRange(self.settings['orthoRange'])
         self.ParaRange.populateRange(self.settings['paraRange'])
-        self.BaselineRange.populateRange(self.settings['baselineRange'])
-        self.EnableLinearCorrection.setChecked(self.settings['enableBaselineCorrection'])
+
+        # Baseline correction settings
+        self.BaselineCorrectionOptions.button(self.settings['enableBaselineCorrection']).setChecked(True)
+        self.LinearBaselineRange.populateRange(self.settings['linearBaselineRange'])
+        self.AverageSelection.button(self.settings['backgroundSubtractionAverages']).setChecked(True)
 
         # Show the settings window 
         self.show()
     
+    # Update settings in settings dictionary
     def settingsApply(self):
-        # Update settings in settings dictionary
+        # Save settings for ortho and para integration ranges
         self.settings['orthoRange'] = self.OrthoRange.getRange()
         self.settings['paraRange'] = self.ParaRange.getRange()
-        self.settings['baselineRange'] = self.BaselineRange.getRange()
-        self.settings['enableBaselineCorrection'] = self.EnableLinearCorrection.isChecked()
 
-        # Write settings to the file
+        # Save settings for baseline correction
+        self.settings['enableBaselineCorrection'] = self.BaselineCorrectionOptions.checkedId()
+        self.settings['linearBaselineRange'] = self.LinearBaselineRange.getRange()
+        self.settings['backgroundSubtractionAverages'] = self.AverageSelection.checkedId()
+        self.settings['customSubtractionBackground'] = self.CustomBackgroundPath.text()
+
+        # Write settings to the settings file
         with open(os.path.join(os.path.dirname(__file__), 'settings.json'), 'w+') as json_file:
             json.dump(self.settings, json_file)
 
+    # Slot to enable input for custom background subtraction path
+    # Only enabled when custom is selected
+    def backgroundSelectionChanged(self, id, checked):
+        if id == 0 and checked == True:
+            self.CustomBackgroundPath.setEnabled(True)
+        else:
+            self.CustomBackgroundPath.setEnabled(False)
 
+
+# Widget for inputting and storing upper and lower limits
 class RangeInputWidget(QWidget):
     def __init__(self, title):
         super().__init__()

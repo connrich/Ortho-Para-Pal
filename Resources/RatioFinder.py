@@ -1,3 +1,4 @@
+from email.mime import base
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from os.path import exists
@@ -26,7 +27,7 @@ class Para:
     # Stores integral sum
     integral = 0
 
-def correct_baseline(df, data_range):
+def linear_correction(df, data_range):
     # Filter for lower spectrum
     cut_low = df[0] >= data_range[0]
     df = df[cut_low]
@@ -55,6 +56,9 @@ def correct_baseline(df, data_range):
 
     return df
 
+def background_subtraction(df, settings):
+    pass
+
 # Takes a CSV of wavelengths vs. intensity count
 def RatioFinder(file_path, base_correction=True, settings=None):
     # Check if files exists
@@ -72,7 +76,7 @@ def RatioFinder(file_path, base_correction=True, settings=None):
         base_correction = settings['enableBaselineCorrection']
         baseline_range = settings['baselineRange']
     else:
-        baseline_range = [320, 620]
+        base_correction = 0
     
     # Create data frame of spectrum data
     df = pd.read_csv(file_path, header=None)
@@ -84,10 +88,12 @@ def RatioFinder(file_path, base_correction=True, settings=None):
     if not is_numeric_dtype(df[0]) or not is_numeric_dtype(df[1]):
         return {'Error': 'Encountered wrong datatype in CSV. Expects floats or integers. It also expects no column header names.',
                 'Filename': file_path.split('\\')[-1]}
-    
+
     # Correct baseline if specified
-    if base_correction:
-        df = correct_baseline(df, baseline_range)
+    if base_correction == 1:
+        df = linear_correction(df, baseline_range)
+    elif base_correction == 2:
+        df = background_subtraction(df, settings)
 
     # Iterate through rows
     for index, row in df.iterrows():
@@ -102,11 +108,11 @@ def RatioFinder(file_path, base_correction=True, settings=None):
             Para.peak = max(Para.peak, count)
             Para.integral += count
 
-    # Output dictionary 
+    # Output dictionary for storing and returning output data
     output = {}
     output['Filename'] = file_path.split('\\')[-1]
 
-    # Try to find time of spectrum based on SPC creation time
+    # Try to find time of spectrum capture based on SPC creation time
     # Assumes 'last modified time' is the moment of creation because 'creation time' refers to local machine creation
     # 'creation time' could be the time that the file was copied onto the local machine
     if 'nt' in os.name: # windows OS
