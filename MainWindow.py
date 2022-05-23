@@ -9,9 +9,6 @@ from Resources.VisualizePage import VisualizePage
 from Resources.CustomWidgets import SettingsWindow
 
 
-# TODO
-# Freeze X and Y axis for zooming functionality
-
 
 class MainWindow(QMainWindow):
     def __init__(self):
