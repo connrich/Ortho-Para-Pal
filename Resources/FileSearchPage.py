@@ -36,6 +36,7 @@ class FileSearchPage(Page):
 
         # Viewing window for the generated tree
         self.TreeViewer = QTreeView()
+        self.TreeViewer.setWordWrap(True)
         self.TreeViewer.setHeaderHidden(True)
         self.PageLayout.addWidget(self.TreeViewer)
 
@@ -61,7 +62,7 @@ class FileSearchPage(Page):
                         results.append(self.getRatio(os.path.join(path, file_name)))
                         found_valid_file = True
                 if not found_valid_file:
-                    ErrorMessage('Could not find a valid CSV file.')
+                    ErrorMessage('Error: Could not find a valid CSV file.')
                     return
                     
             elif os.path.isfile(path):
@@ -74,6 +75,8 @@ class FileSearchPage(Page):
             
             self.results = results 
             self.displayResults(results)
+        else:
+            ErrorMessage('Error: File could not be found or does not exist.')
 
     # Called when file path is submitted 
     def getRatio(self, path):  
@@ -132,7 +135,6 @@ class FileSearchPage(Page):
             return
 
         for result in self.results:
-            print(result)
             valid_file = self.addResultToDB(result)
             if not valid_file:
                 break

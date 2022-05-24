@@ -57,6 +57,10 @@ class MainWindow(QMainWindow):
         self.VisualizePage = VisualizePage(self.settings)
         self.SettingsWindow.ApplyButton.clicked.connect(self.VisualizePage.settingsUpdated) # Signal for settings update
         self.Tabs.addTab(self.VisualizePage, 'Visualize')
+    
+    def closeEvent(self, e):
+        self.SettingsWindow.close()
+        return super().closeEvent(e)
 
 
 if __name__ == "__main__":
