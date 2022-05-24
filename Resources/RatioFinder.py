@@ -1,11 +1,9 @@
-from email.mime import base
 import pandas as pd
 from pandas.api.types import is_numeric_dtype
 from os.path import exists
 import os
 from datetime import datetime
 from pytz import timezone
-import pytz
 from matplotlib import pyplot as plt
 
 
@@ -27,12 +25,23 @@ class Para:
     # Stores integral sum
     integral = 0
 
-def linear_correction(df, data_range):
+# Validates if the data frame has the correct formatting
+def isDFValid(df):
+    if len(df.columns) != 2:
+        return False
+    if not is_numeric_dtype(df[0]) or not is_numeric_dtype(df[1]):
+        return False
+    
+    return True
+
+# Calculates a linear baseline correction over a window
+# window = [low, high]
+def linear_correction(df, window):
     # Filter for lower spectrum
-    cut_low = df[0] >= data_range[0]
+    cut_low = df[0] >= window[0]
     df = df[cut_low]
     # Filter for higher spectrum
-    cut_high = df[0] <= data_range[1]
+    cut_high = df[0] <= window[1]
     df = df[cut_high]
 
     # Coordinates for linear baseline estimation
@@ -57,13 +66,40 @@ def linear_correction(df, data_range):
     return df
 
 def background_subtraction(df, settings):
-    pass
+    # Number of signal averages selected
+    # 0 = custom background
+    # 20, 30, 50 = standard background
+    averages = settings['backgroundSubtractionAverages']
+
+    # Tries loading custom background if selected
+    if averages == 0:
+        path = settings['customSubtractionBackgroundPath']
+        if os.path.exists(path):
+            if path.split('.')[-1] == 'csv':
+                background_df = pd.read_csv(path, header=None)
+                if isDFValid(background_df) and len(df) == len(background_df):
+                    df[1] = df[1] - background_df[1]
+                    return df, True
+            else:
+                return df, False
+        else:
+            return df, False
+    else:
+        path = f'Resources\\Background Spectra\\20220519_He_5,3PSIG_0,2SLM_295K_1000ms_{averages}av_0ms_3_450mw_00000_counts.csv'
+        background_df = pd.read_csv(path, header=None)
+        # Check if the background is valid and has same length as the spectrum
+        if isDFValid(background_df) and len(df) == len(background_df):
+            df[1] = df[1] - background_df[1]
+            return df, True # Returns dataframe and whether operation was succesful
+        else:
+            return df, False # Returns dataframe and whether operation was succesful
 
 # Takes a CSV of wavelengths vs. intensity count
 def RatioFinder(file_path, base_correction=True, settings=None):
     # Check if files exists
     if not exists(file_path) or file_path is None or file_path == '':
-        return 'Invalid path'
+        return {'Error': 'Invalid path. File could not be found.', 
+                'Filename': file_path.split('\\')[-1]}
 
     # Reset values
     Ortho.peak = 0
@@ -93,7 +129,11 @@ def RatioFinder(file_path, base_correction=True, settings=None):
     if base_correction == 1:
         df = linear_correction(df, baseline_range)
     elif base_correction == 2:
-        df = background_subtraction(df, settings)
+        df, success = background_subtraction(df, settings)
+        if not success:
+            return {'Error': 'Invalid background spectrum. Could not complete subtraction. Validate the selected custom background or select another correction option.',
+                    'Filename': file_path.split('\\')[-1],
+                    'Background Filename': settings['customSubtractionBackgroundPath']}
 
     # Iterate through rows
     for index, row in df.iterrows():

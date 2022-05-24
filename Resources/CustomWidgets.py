@@ -232,9 +232,11 @@ class SettingsWindow(QWidget):
         self.BaselineCorrectionOptions.button(self.settings['enableBaselineCorrection']).setChecked(True)
         self.LinearBaselineRange.populateRange(self.settings['linearBaselineRange'])
         self.AverageSelection.button(self.settings['backgroundSubtractionAverages']).setChecked(True)
+        self.CustomBackgroundPath.setText(self.settings['customSubtractionBackgroundPath'])
 
         # Show the settings window 
         self.show()
+        self.activateWindow()
     
     # Update settings in settings dictionary
     def settingsApply(self):
@@ -246,7 +248,7 @@ class SettingsWindow(QWidget):
         self.settings['enableBaselineCorrection'] = self.BaselineCorrectionOptions.checkedId()
         self.settings['linearBaselineRange'] = self.LinearBaselineRange.getRange()
         self.settings['backgroundSubtractionAverages'] = self.AverageSelection.checkedId()
-        self.settings['customSubtractionBackground'] = self.CustomBackgroundPath.text()
+        self.settings['customSubtractionBackgroundPath'] = self.CustomBackgroundPath.text()
 
         # Write settings to the settings file
         with open(os.path.join(os.path.dirname(__file__), 'settings.json'), 'w+') as json_file:
