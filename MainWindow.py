@@ -80,6 +80,7 @@ class MainWindow(QMainWindow):
     
     def closeEvent(self, e):
         self.SettingsWindow.close()
+        self.HelpWindow.close()
         return super().closeEvent(e)
 
 

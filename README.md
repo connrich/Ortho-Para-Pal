@@ -7,9 +7,11 @@ There are two main functions in the main application: Ratio Finder and Visualize
 Ratio Finder will take spectra and determine the ortho-para ratios using peak height ratios and integration ratios. <br />
 The Ratio Finder tab is designed to take either a single spectrum or a directory containing spectra. The spectra must be in comma seperated value format(CSV) where the first column is the x-axis(wavelength) and second column is y-axis(intensity count). The CSV should not have any headers. <br />
 The CSV files are loaded by providing an absolute path in the 'Enter file path' box. A file explorer can be opened using the 'Browse' button to select the file/folder.
-The results can be saved to a location by submitting an absolute path in the 'Save path' box. The file name must be terminated with '.csv' and may overwrite files if they have the same name. Auto-save can be turned on by checking the 'Auto-save' button. Saved files are formatted as CSV and will contain ratio information and relevant information extracted from the file name.<br />
-Each spectrum file name is expected in the format: <br /> date_time_gas_pressure_flowrate_temperature_misc_misc.csv <br />
-File name example: 20220517_1705_H2_5,35PSIG_0,51SLM_77,7K_1_00000_counts.csv <br />
+The results can be saved to a location by submitting an absolute path in the 'Save path' box. The file name must be terminated with '.csv' and may overwrite files if they have the same name. Auto-save can be turned on by checking the 'Auto-save' button. Saved files are formatted as CSV and will contain ratio information and relevant information extracted from the file name.
+<br /><br />
+Each spectrum file name is expected in the format: <br />  date_time_gas_pressure_flowrate_temperature_misc_misc.csv <br /> <br /> 
+File name example: <br />
+20220517_1705_H2_5,35PSIG_0,51SLM_77,7K_1_00000_counts.csv <br /> 
     * date = date the spectrum was taken <br />
     * time = time the spectrum was taken <br />
     * gas = gas present in the system during spectrum capture <br />
