@@ -2,6 +2,7 @@
 A handy tool for analyzing the ratios between ortho-hydrogen and para-hydrogen in Raman spectra.
 
 # Usage
+Use MainWindow.py to run the GUI. The 'Resources' folder contains components that are used in the application.
 There are two main functions in the main application: Ratio Finder and Visualize.
 ### Ratio Finder
 Ratio Finder will take spectra and determine the ortho-para ratios using peak height ratios and integration ratios. <br />
