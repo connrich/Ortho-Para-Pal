@@ -50,9 +50,6 @@ class SearchBar(QWidget):
             self.BrowseButton.clicked.connect(self.openFileBrowser)
             self.Layout.addWidget(self.BrowseButton)
 
-            # Save previous file location
-            self.prev_file_loc = 'c:\\'
-
             # Create QFileDialog
             self.FileBrowser = FileDialog()
             self.FileBrowser.file_selected_signal.connect(self.populateInput)
