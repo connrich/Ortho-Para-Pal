@@ -85,7 +85,8 @@ def background_subtraction(df, settings):
         else:
             return df, False
     else:
-        path = f'Resources\\Background Spectra\\20220519_He_5,3PSIG_0,2SLM_295K_1000ms_{averages}av_0ms_3_450mw_00000_counts.csv'
+        path = f'Ortho-Para Pal\\Resources\\Background Spectra\\20220519_He_5,3PSIG_0,2SLM_295K_1000ms_{averages}av_0ms_3_450mw_00000_counts.csv'
+        print(os.getcwd())
         background_df = pd.read_csv(path, header=None)
         # Check if the background is valid and has same length as the spectrum
         if isDFValid(background_df) and len(df) == len(background_df):
@@ -143,10 +144,12 @@ def RatioFinder(file_path, base_correction=True, settings=None):
         # Find peak ranges, integrate them, and save maximum peak height
         if wl < Ortho.range[1] and wl > Ortho.range[0]:
             Ortho.peak = max(Ortho.peak, count)
-            Ortho.integral += count
+            if count > 0:
+                Ortho.integral += count
         if wl < Para.range[1] and wl > Para.range[0]:
             Para.peak = max(Para.peak, count)
-            Para.integral += count
+            if count > 0:
+                Para.integral += count
 
     # Output dictionary for storing and returning output data
     output = {}
